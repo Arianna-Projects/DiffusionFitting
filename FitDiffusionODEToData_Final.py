@@ -1,3 +1,28 @@
+# FitDiffusionODEToData_Final.py
+# Copyright (c) 2023-2025 Arianna Jaroszynska
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+#This project uses third-party libraries:
+
+#- SciPy (BSD 3-Clause License): https://scipy.org
+#- NumPy (BSD 3-Clause License): https://numpy.org
+#- Matplotlib (Matplotlib License): https://matplotlib.org
+#- Tkinter (Python Software Foundation License): https://www.python.org
+
+#These libraries remain under their respective licenses.
+
 #!/usr/bin/env python3
 """
 Standalone GUI for fitting diffusion PDE to experimental data and plotting results.
@@ -622,3 +647,4 @@ if __name__ == '__main__':
     root = tk.Tk()
     app = DiffusionFitApp(root)
     root.mainloop()
+
