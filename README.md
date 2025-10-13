@@ -3,8 +3,11 @@ DiffusionFitting
 
 DiffusionFitting is a Python-based program for fitting diffusion profiles using a numerical solution to Fick’s second law based on finite difference method. It supports concentration-dependent diffusion and automatically optimizes key physical parameters such as D, C0, and Cbgr using non-linear least squares. 
 
-<img width="1017" height="681" alt="image" src="https://github.com/user-attachments/assets/a2219dd9-6026-4bba-8e27-dcd60121e81c" />
+Example 1: Mg diffusion (n = 1)
+<img width="1018" height="610" alt="MgDiffusion_n=1" src="https://github.com/user-attachments/assets/820a260a-b6d0-4bb0-8b39-fd4c803f4c6d" />
 
+Example 2: Undisclosed n = 3 diffusion
+<img width="1018" height="610" alt="TestDiff_n=3" src="https://github.com/user-attachments/assets/beab84e7-ffb2-4acd-869d-7ca98d53b659" />
 
 
 Features
@@ -43,7 +46,7 @@ Usage
 -----
 
 - Open the program and load your diffusion profile data (.txt file with two tab-separated columns: depth [µm] and concentration [1/cm3]).
-- Adjust simulation settings as needed (n, Nx_sim, Nx_plot).
+- Adjust simulation settings as needed (Concentration dependence n, Simulation points, Plot points).
 - Click "Fit" to optimize parameters.
 - Save results and plots using the built-in buttons.
 
