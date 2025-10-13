@@ -1,4 +1,4 @@
-# FitDiffusionODEToData_Final.py
+# FitDiffusionODEToData_Final.py v1.1
 # Copyright (c) 2023-2025 Arianna Jaroszynska
 #
 # This program is free software: you can redistribute it and/or modify
@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-#This project uses third-party libraries:
+# This project uses third-party libraries:
 
 #- SciPy (BSD 3-Clause License): https://scipy.org
 #- NumPy (BSD 3-Clause License): https://numpy.org
@@ -23,11 +23,14 @@
 
 #These libraries remain under their respective licenses.
 
+# Github repository for this project is in the link below
+# https://github.com/Arianna-Projects/DiffusionFitting
+
 #!/usr/bin/env python3
 """
 Standalone GUI for fitting diffusion PDE to experimental data and plotting results.
-Save this file and run with: python FitDiffusionODEToData_fixed.py
-Dependencies: numpy matplotlib scipy lmfit numba (optional), tkinter
+Save this file and run with: python FitDiffusionODEToData.py
+Dependencies: numpy, matplotlib, scipy, lmfit, tkinter (included with standard python installs)
 """
 
 import os
@@ -44,49 +47,31 @@ from lmfit import Parameters, minimize
 import warnings
 warnings.filterwarnings("ignore", message="Using UFloat objects with std_dev==0")
 
-# Try to import numba; if not available fall back to numpy implementation
-try:
-    from numba import njit
-    NUMBA_AVAILABLE = True
-except Exception:
-    NUMBA_AVAILABLE = False
-
 # --- Unit conversion ---
 umtocm = 1e-4
 
 # Default values
 DEFAULT_NX_SIM = 200 # 200 sim points
 DEFAULT_N = 0  # no concentration dependence
-DEFAULT_TF = 60 * 30  # 30 min
+DEFAULT_TF = 30  # 30 min
 
-# --- Utilities: vectorized RHS (numba if available) ---
-if NUMBA_AVAILABLE:
-    @njit
-    def diffusion_rhs_numba_vec(u, D, dx, n, C0):
-        u_n = u**n
-        dU = np.zeros_like(u)
-        for i in range(1, u.shape[0]-1):
-            dU[i] = (D / (C0**n) / (2*dx**2)) * (
-                (u_n[i] + u_n[i+1]) * (u[i+1] - u[i]) -
-                (u_n[i-1] + u_n[i]) * (u[i] - u[i-1])
-            )
-        return dU
-else:
-    def diffusion_rhs_numba_vec(u, D, dx, n, C0):
-        u_n = u**n
-        dU = np.zeros_like(u)
-        dU[1:-1] = (D / (C0**n) / (2*dx**2)) * (
-            (u_n[1:-1] + u_n[2:]) * (u[2:] - u[1:-1]) -
-            (u_n[:-2] + u_n[1:-1]) * (u[1:-1] - u[:-2])
-        )
-        return dU
+# --- Utilities: vectorized RHS ---
+
+def diffusion_rhs_vec(u, D, dx, n, C0):
+    u_n = u**n
+    dU = np.zeros_like(u)
+    dU[1:-1] = (D / (C0**n) / (2*dx**2)) * (
+        (u_n[1:-1] + u_n[2:]) * (u[2:] - u[1:-1]) -
+        (u_n[:-2] + u_n[1:-1]) * (u[1:-1] - u[:-2])
+    )
+    return dU
 
 # --- PDE solver ---
 def solve_diffusion(t_annealing, D, Cbgr, C0, x_sim, n):
     dx = x_sim[1] - x_sim[0]
     u0 = np.full_like(x_sim, Cbgr)
     u0[0] = C0
-    rhs = lambda t, u: diffusion_rhs_numba_vec(u, D, dx, n, C0)
+    rhs = lambda t, u: diffusion_rhs_vec(u, D, dx, n, C0)
     sol = solve_ivp(rhs, [0, t_annealing], u0, method="BDF",
                     atol=1e-7, rtol=1e-5, t_eval=[t_annealing])
     return sol.y[:, -1]
@@ -117,7 +102,7 @@ class DiffusionFitApp:
         self.master = master
         prog_name = os.path.basename(__file__).replace("_Final.py", "")
         master.title(f"{prog_name}")
-        master.geometry('1024x648')
+        master.geometry('1024x576')
 
         # Variables
         self.filename = tk.StringVar(value='')
@@ -145,14 +130,14 @@ class DiffusionFitApp:
         ttk.Label(topframe, text='Data file:').grid(row=0, column=0, sticky='w')
         self.entry_file = ttk.Entry(topframe, textvariable=self.filename, width=80)
         self.entry_file.grid(row=0, column=1, padx=4)
-        ttk.Button(topframe, text='Browse...', command=self.browse_file).grid(row=0, column=2, padx=4)
+        ttk.Button(topframe, text='Browse', command=self.browse_file).grid(row=0, column=2, padx=4)
 
         # Matrix of spinboxes for Simulation Settings
-        matrix_frame = ttk.LabelFrame(topframe, text='Simulation Settings')
+        matrix_frame = ttk.LabelFrame(topframe, text='Simulation settings')
         matrix_frame.grid(row=2, column=0, columnspan=5, pady=8, sticky='w')
 
         # Display fitted parameters (to the right of simulation settings)
-        param_frame = ttk.LabelFrame(topframe, text='Fitted Parameters')
+        param_frame = ttk.LabelFrame(topframe, text='Fitted parameters')
         param_frame.grid(row=2, column=5, padx=10, pady=8, sticky='nw')
 
 
@@ -163,8 +148,8 @@ class DiffusionFitApp:
         }
         units = {
             "D": "cm2/s",
-            "C0": "cm3",
-            "Cbgr": "cm3"
+            "C0": "1/cm3",
+            "Cbgr": "1/cm3"
         }
 
         row = 0
@@ -196,16 +181,16 @@ class DiffusionFitApp:
         ttk.Spinbox(matrix_frame, textvariable=self.tf_var, from_=0.01, to=1000000,
                     increment=1, width=8).grid(row=0, column=1, padx=4, pady=2)
 
-        ttk.Label(matrix_frame, text='n:').grid(row=0, column=2, sticky='w')
+        ttk.Label(matrix_frame, text='Concentration dependence (n):').grid(row=0, column=2, sticky='w')
         ttk.Spinbox(matrix_frame, textvariable=self.n_var, from_=-10, to=10,
                     increment=0.1, width=8).grid(row=0, column=3, padx=4, pady=2)
 
         # Row 2
-        ttk.Label(matrix_frame, text='Nx_sim:').grid(row=1, column=0, sticky='w')
+        ttk.Label(matrix_frame, text='Simulation points:').grid(row=1, column=0, sticky='w')
         ttk.Spinbox(matrix_frame, textvariable=self.nx_sim_var, from_=100, to=10000,
                     increment=50, width=8).grid(row=1, column=1, padx=4, pady=2)
 
-        ttk.Label(matrix_frame, text='Nx_plot:').grid(row=1, column=2, sticky='w')
+        ttk.Label(matrix_frame, text='Plot points:').grid(row=1, column=2, sticky='w')
         ttk.Spinbox(matrix_frame, textvariable=self.nx_plot_var, from_=100, to=20000,
                     increment=100, width=8).grid(row=1, column=3, padx=4, pady=2)
 
@@ -238,7 +223,7 @@ class DiffusionFitApp:
         plotframe = ttk.Frame(master)
         plotframe.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
 
-        self.fig, self.ax = plt.subplots(figsize=(7,5.5))
+        self.fig, self.ax = plt.subplots()
         self.canvas = FigureCanvasTkAgg(self.fig, master=plotframe)
         self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
@@ -367,6 +352,7 @@ class DiffusionFitApp:
         self.fig.tight_layout()
         self.canvas.draw()
 
+
     def save_last_simulation(self):
         # Single robust save function
         if self.last_sim_x is None:
@@ -424,9 +410,16 @@ class DiffusionFitApp:
                     except Exception:
                         pass
                 plot_filename = fname.replace('.txt', '_plot.png')
+
+                # Save current figure size, then temporarily set to 7x5.5 for export only
+                original_size = self.fig.get_size_inches()
                 self.fig.set_size_inches(7, 5.5)
                 self.fig.tight_layout()
                 self.fig.savefig(plot_filename, dpi=600, bbox_inches='tight')
+                # Restore the original size so Tkinter view is unaffected
+                self.fig.set_size_inches(original_size)
+                self.fig.tight_layout()
+                self.canvas.draw()
             except Exception as e:
                 messagebox.showerror('Save plot error', f'Could not save plot: {e}')
 
@@ -502,7 +495,7 @@ class DiffusionFitApp:
             Cbgr_uncertainty = 100 * Cbgr_error / Cbgr_fitted if Cbgr_fitted else 0
 
             # Prepare high-resolution simulation for plotting (done in worker)
-            Nx_plot = max(100, Nx_sim)
+            Nx_plot = max(50, Nx_sim)
             x_sim_plot = np.linspace(x_exp.min(), x_exp.max(), Nx_plot)
             u_sim_plot = solve_diffusion(tf_seconds, D_fitted, Cbgr_fitted, C0_fitted, x_sim_plot, n)
 
@@ -581,7 +574,7 @@ class DiffusionFitApp:
         
         "• Annealing time (min) → Duration of the diffusion process.\n\n"
         
-        "• n → Concentration dependence exponent. \n"
+        "• Concentration dependence (n) → Concentration dependence exponent. \n"
         "Generally, n values are integers (negative too) like -2, -1, 0, 1, 2, 3). "
         "They are correlated with governing diffusion mechanisms. " 
         "To find the best fit for your data, it is best to consult the scientific literature. "
@@ -591,13 +584,13 @@ class DiffusionFitApp:
         "n = 1 for profiles like Mg in GaN diffusion\n"
         "n = 3 for steep, cliff-like profiles\n\n"
             
-        "• Nx_sim → Number of grid points for simulation. Larger = higher accuracy, slower.\n\n" 
+        "• Simulation points → Number of grid points for simulation. Larger = higher accuracy, slower.\n\n" 
         "Recommended values:\n"
         ">200 if you do not mind waiting for a long time for results\n"
         "200 for still fast and good results\n"
         "100 for decent results. \n\n"
             
-        "• Nx_plot → Number of points for final plot resolution.\n\n" 
+        "• Plot points → Number of points for final plot dataset.\n\n" 
         "Recommended values:\n"
         ">1000 for if you really need a lot of data\n"
         "1000 for a pretty curve\n"
@@ -630,8 +623,8 @@ class DiffusionFitApp:
         "- You can save the plot automatically by ticking the checkbox.\n\n"
 
         "AUTHOR\n\n"
-        "Hello! My name is Arianna.\n\n"
-        "I wrote this program in python back in 2023 (original version).\n"
+        "Hello! \n\n"
+        "I wrote this back in 2023 (original version).\n"
         "Added GUI in 2025.\n\n"
         "The source code is located on my github repository: \n"
         "https://github.com/Arianna-Projects/DiffusionFitting\n\n"
@@ -647,4 +640,5 @@ if __name__ == '__main__':
     root = tk.Tk()
     app = DiffusionFitApp(root)
     root.mainloop()
+
 
