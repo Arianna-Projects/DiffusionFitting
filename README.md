@@ -10,7 +10,8 @@ Example 2: Mg diffusion in GaN (n = 1)
 <img width="1018" height="610" alt="Diffusion_n=1" src="https://github.com/user-attachments/assets/820a260a-b6d0-4bb0-8b39-fd4c803f4c6d" />
 
 Example 3: Undisclosed n = 3 diffusion
-<img width="1018" height="610" alt="500424556-beab84e7-ffb2-4acd-869d-7ca98d53b659" src="https://github.com/user-attachments/assets/4ef7d690-2572-4db2-a71f-b486d3d4a1a2" />
+<img width="1018" height="610" alt="500424556-beab84e7-ffb2-4acd-869d-7ca98d53b659" src="https://github.com/user-attachments/assets/feda0c14-f0c8-450f-9ae6-9f567b429282" />
+
 
 
 
